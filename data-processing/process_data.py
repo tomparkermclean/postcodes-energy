@@ -47,6 +47,11 @@ DNO_FILES = {
         "dno_name": "Scottish & Southern Electricity Networks",
         "license_area": "SEPD - Southern & Central"
     },
+    "SSEN_SHEPD": {
+        "file": "shepd_primarysubstation_esa_2025.geojson",
+        "dno_name": "Scottish & Southern Electricity Networks",
+        "license_area": "SHEPD - North Scotland & Highlands"
+    },
     "NGRID_EM": {
         "file": "east_midlands_primary.gpkg",
         "dno_name": "National Grid",
@@ -72,11 +77,11 @@ DNO_FILES = {
         "dno_name": "UK Power Networks",
         "license_area": "EPN/LPN/SPN - East/London/Southeast"
     },
-    # "NPG": {
-    #     "file": "distribution-substation-service-areas.geojson",
-    #     "dno_name": "Northern Powergrid",
-    #     "license_area": "Northeast & Yorkshire"
-    # },  # Disabled - these are distribution substations, not primary
+    "NPG": {
+        "file": "NPG Primary substation_combined_service_areas.geojson",
+        "dno_name": "Northern Powergrid",
+        "license_area": "Northeast & Yorkshire"
+    },
     "ENWL": {
         "file": "dfes-primary-polygons.geojson",
         "dno_name": "Electricity North West",
