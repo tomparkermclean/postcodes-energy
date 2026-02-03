@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find postcodes connected to the same electricity substation</title>
+    <meta name="description" content="Find which electricity distribution substation serves your UK postcode and see all other postcodes in the same area.">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Find postcodes connected to the same electricity substation</h1>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="main-content">
+            <!-- Left Column: About & Feedback -->
+            <aside class="sidebar">
+                <!-- About Section -->
+                <section class="about-section">
+                    <h2>What is this tool?</h2>
+                    <p>As more renewable energy is generated locally, the electricity system works best when that energy is <strong>used locally</strong>.</p>
+                    
+                    <p><strong>Community energy</strong> projects can supply power to nearby homes and businesses at <strong>fairer prices</strong>, if the generation and demand sit within the same substation area. This tool helps you <strong>match postcodes</strong> in the same substation area.</p>
+                </section>
+
+                <!-- Feedback Section -->
+                <section class="feedback-section">
+                    <h2>Give me feedback</h2>
+                    <p>This tool is free and open to use.</p>
+                    <p>If you find it useful, I'd love to hear how you're using it and any additions/changes that would be helpful.</p>
+                    
+                    <form id="feedback-form" class="feedback-form">
+                        <div class="form-group">
+                            <textarea 
+                                id="use-case" 
+                                name="use-case" 
+                                rows="2" 
+                                placeholder="What are you using the tool for? E.g. planning a community solar project"
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea 
+                                id="organization" 
+                                name="organization" 
+                                rows="1"
+                                placeholder="What is your community group or organisation?"
+                            ></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea 
+                                id="suggestions" 
+                                name="suggestions" 
+                                rows="2" 
+                                placeholder="How can the tool be improved? E.g. it would be helpful to see xx data"
+                            ></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <textarea 
+                                id="email" 
+                                name="email" 
+                                rows="1"
+                                placeholder="Enter your email if you would like to discuss the tool further (Optional)"
+                            ></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Send Feedback</button>
+                    </form>
+                    
+                    <div id="feedback-success" class="feedback-success hidden">
+                        <p>✅ Thank you for sharing! Your feedback helps us understand how this tool is making a difference.</p>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Right Column: Search & Results -->
+            <main class="main-column">
+                <!-- Search Section -->
+                <section class="search-section">
+                    <p class="search-hint">Enter a postcode to explore its substation area on a map, view all connected postcodes, and download the full list in Excel.</p>
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="postcode-input" 
+                            placeholder="Enter UK postcode (e.g., SW1A 1AA)"
+                            autocomplete="off"
+                            aria-label="Postcode search"
+                        >
+                        <button id="search-btn">Search</button>
+                    </div>
+                    <div id="autocomplete-list" class="autocomplete-items"></div>
+                </section>
+
+                <!-- Map (always visible) -->
+                <section class="map-section">
+                    <div id="map"></div>
+                </section>
+
+                <!-- Results Container (hidden until search) -->
+                <div id="results-container" class="results-container hidden">
+                    <!-- Substation Info -->
+                    <section class="info-section">
+                        <div class="info-card">
+                            <h2>Substation Information</h2>
+                            <div id="substation-info">
+                                <p class="info-item"><strong>Substation:</strong> <span id="sub-name">-</span></p>
+                                <p class="info-item"><strong>DNO:</strong> <span id="sub-dno">-</span></p>
+                                <p class="info-item"><strong>License Area:</strong> <span id="sub-area">-</span></p>
+                                <p class="info-item"><strong>Postcodes in Area:</strong> <span id="sub-count">-</span></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Postcodes List -->
+                    <section class="postcodes-section">
+                        <div class="postcodes-card">
+                            <div class="postcodes-header">
+                                <h2>Postcodes in This Area</h2>
+                                <button id="export-btn" class="export-btn">Export CSV</button>
+                            </div>
+                            <div id="postcodes-list" class="postcodes-list">
+                                <!-- Postcodes will be loaded here -->
+                            </div>
+                            <div id="pagination" class="pagination hidden">
+                                <button id="prev-page" disabled>Previous</button>
+                                <span id="page-info">Page 1</span>
+                                <button id="next-page">Next</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-message hidden"></div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <p><strong>Data Sources:</strong> Distribution Network Operators (DNOs) open data, Office for National Statistics (ONS)</p>
+                <p><strong>Disclaimer:</strong> This tool is provided for informational purposes only. Data accuracy is not guaranteed.</p>
+                <p><strong>License:</strong> MIT | <a href="https://github.com/yourusername/postcodes-energy" target="_blank">GitHub</a></p>
+                <p class="attribution">© 2026 postcodes.energy | Contains public sector information licensed under the Open Government Licence v3.0</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>

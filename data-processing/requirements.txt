@@ -1,0 +1,6 @@
+geopandas==0.14.3
+shapely==2.0.2
+pandas==2.2.0
+fiona==1.9.5
+pyogrio==0.7.2
+tqdm==4.66.1
