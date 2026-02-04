@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from shapely.geometry import shape, mapping
 
-def simplify_geometry(geom, tolerance=0.003):
-    """More aggressive simplification"""
+def simplify_geometry(geom, tolerance=0.001):
+    """Very minimal simplification for high quality"""
     try:
         shapely_geom = shape(geom)
         simplified = shapely_geom.simplify(tolerance, preserve_topology=True)
@@ -16,8 +16,8 @@ def simplify_geometry(geom, tolerance=0.003):
         print(f"Error: {e}")
         return geom
 
-def round_coordinates(geom, decimals=3):
-    """Round to 3 decimals = ~111 meter precision"""
+def round_coordinates(geom, decimals=4):
+    """Round to 4 decimals = ~11m precision"""
     def round_coords(coords):
         if isinstance(coords[0], (list, tuple)):
             return [round_coords(c) for c in coords]
@@ -37,17 +37,24 @@ def simplify_substations_file(input_path, output_path):
         data = json.load(f)
     
     print(f"Processing {len(data)} substations...")
-    print("Using aggressive settings:")
-    print("  - Tolerance: 0.003 (3x more simplification)")
-    print("  - Decimals: 3 (~111m precision)")
+    print("Using very minimal simplification:")
+    print("  - Tolerance: 0.001 (very minimal)")
+    print("  - Decimals: 4 (~11m precision)")
+    print("  - Removing non-essential fields")
     
     for substation_id, substation in data.items():
+        # Keep essential fields for frontend
+        fields_to_keep = {'id', 'name', 'dno_id', 'dno_name', 'dno', 'license_area', 'postcode_count', 'centroid', 'boundary', 'geometry'}
+        fields_to_remove = [k for k in list(substation.keys()) if k not in fields_to_keep]
+        for field in fields_to_remove:
+            del substation[field]
+        
         if 'boundary' in substation or 'geometry' in substation:
             geom_field = 'boundary' if 'boundary' in substation else 'geometry'
             
-            # Aggressive simplification
-            simplified_geom = simplify_geometry(substation[geom_field], tolerance=0.003)
-            simplified_geom = round_coordinates(simplified_geom, decimals=3)
+            # Very minimal simplification
+            simplified_geom = simplify_geometry(substation[geom_field], tolerance=0.001)
+            simplified_geom = round_coordinates(simplified_geom, decimals=4)
             
             substation[geom_field] = simplified_geom
     
@@ -59,15 +66,15 @@ def simplify_substations_file(input_path, output_path):
     new_size = Path(output_path).stat().st_size / (1024 * 1024)
     reduction = ((original_size - new_size) / original_size) * 100
     
-    print(f"\n✅ Done!")
+    print(f"\nDone!")
     print(f"Original size: {original_size:.2f} MB")
     print(f"New size: {new_size:.2f} MB")
     print(f"Reduction: {reduction:.1f}%")
     
     if new_size > 25:
-        print(f"\n⚠️  Still {new_size:.2f} MB (over limit)")
+        print(f"\nWARNING: Still {new_size:.2f} MB (over limit)")
     else:
-        print(f"\n🎉 Success! Under 25 MB!")
+        print(f"\nSuccess! Under 25 MB!")
 
 if __name__ == "__main__":
     # Use the original backup
@@ -83,4 +90,4 @@ if __name__ == "__main__":
     
     new_size = output_file.stat().st_size / (1024 * 1024)
     if new_size <= 25:
-        print(f"\n✅ substations.json is now ready for deployment!")
+        print(f"\nsubstations.json is now ready for deployment!")

@@ -215,7 +215,7 @@ async function findSubstationForPostcode(postcode) {
 }
 
 // Display results for a postcode
-function displayResults(postcode, postcodeData) {
+async function displayResults(postcode, postcodeData) {
     hideError();
     
     const substationId = postcodeData.substation_id;
@@ -232,6 +232,9 @@ function displayResults(postcode, postcodeData) {
     document.getElementById('sub-area').textContent = substation.license_area;
     document.getElementById('sub-count').textContent = substation.postcode_count.toLocaleString();
     
+    // Load nearby chunks to get more complete postcode list
+    await loadNearbyChunks(postcode);
+    
     // Get all postcodes in this substation area
     allPostcodesInArea = getAllPostcodesInSubstation(substationId);
     
@@ -246,14 +249,52 @@ function displayResults(postcode, postcodeData) {
     resultsContainer.classList.remove('hidden');
 }
 
+// Load nearby chunks to get more complete postcode data
+async function loadNearbyChunks(postcode) {
+    // Extract area prefix (e.g., "IV" from "IV1 2DA")
+    const areaPrefix = postcode.match(/^[A-Z]+/)[0];
+    
+    // Load chunks for this area (e.g., IV1-IV99)
+    console.log(`Loading nearby chunks for area: ${areaPrefix}`);
+    const loadPromises = [];
+    
+    for (let i = 1; i <= 99; i++) {
+        const chunkName = `${areaPrefix}${i}`;
+        // Try to load, but don't fail if chunk doesn't exist
+        loadPromises.push(
+            loadChunk(chunkName).catch(() => null)
+        );
+    }
+    
+    // Also try without number (e.g., "IV")
+    loadPromises.push(loadChunk(areaPrefix).catch(() => null));
+    
+    // Wait for all to complete (successful or failed)
+    await Promise.all(loadPromises);
+    console.log(`Finished loading chunks for ${areaPrefix} area`);
+}
+
 // Get all postcodes for a substation
 function getAllPostcodesInSubstation(substationId) {
-    // Get postcodes from substation details (pre-computed)
-    const substation = substationDetails[substationId];
-    if (substation && substation.postcodes) {
-        return substation.postcodes;  // Already sorted
+    // Scan through all loaded chunks to find postcodes in this substation
+    const postcodes = [];
+    
+    console.log(`Looking for postcodes in substation: ${substationId}`);
+    console.log(`Loaded chunks: ${Object.keys(postcodeLookup).join(', ')}`);
+    
+    for (const outwardCode in postcodeLookup) {
+        const chunk = postcodeLookup[outwardCode];
+        for (const postcode in chunk) {
+            if (chunk[postcode].substation_id === substationId) {
+                postcodes.push(postcode);
+            }
+        }
     }
-    return [];
+    
+    console.log(`Found ${postcodes.length} postcodes in substation ${substationId}`);
+    
+    // Sort alphabetically
+    return postcodes.sort();
 }
 
 // Display paginated postcodes list
