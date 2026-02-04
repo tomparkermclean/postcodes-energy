@@ -487,7 +487,8 @@ async function handleFeedbackSubmit(e) {
         formDataToSend.append('use_case', formData.useCase);
         formDataToSend.append('organization', formData.organization);
         formDataToSend.append('suggestions', formData.suggestions);
-        formDataToSend.append('email', formData.email);
+        // If email is empty, send a placeholder so Formshield doesn't block it
+        formDataToSend.append('email', formData.email || 'noreply@energy-postcodes.uk');
         formDataToSend.append('timestamp', formData.timestamp);
         
         const response = await fetch('https://formspree.io/f/xykprrkn', {
