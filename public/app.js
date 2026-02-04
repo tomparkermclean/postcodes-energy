@@ -482,21 +482,27 @@ async function handleFeedbackSubmit(e) {
     submitBtn.textContent = 'Sending...';
     
     try {
-        // For now, just log to console and show success
-        // In production, you would send this to your backend API or form service
-        console.log('Feedback submitted:', formData);
+        // Send to Formspree using FormData
+        const formDataToSend = new FormData();
+        formDataToSend.append('use_case', formData.useCase);
+        formDataToSend.append('organization', formData.organization);
+        formDataToSend.append('suggestions', formData.suggestions);
+        formDataToSend.append('email', formData.email);
+        formDataToSend.append('timestamp', formData.timestamp);
         
-        // You can integrate with services like:
-        // - Formspree: https://formspree.io/
-        // - Google Forms
-        // - Your own API endpoint
+        const response = await fetch('https://formspree.io/f/xykprrkn', {
+            method: 'POST',
+            body: formDataToSend,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         
-        // Example with Formspree (uncomment and add your form ID):
-        // const response = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(formData)
-        // });
+        if (!response.ok) {
+            throw new Error('Failed to submit feedback');
+        }
+        
+        console.log('Feedback submitted successfully:', formData);
         
         // Show success message
         form.reset();
