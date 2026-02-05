@@ -487,7 +487,7 @@ async function handleFeedbackSubmit(e) {
         formDataToSend.append('access_key', '51dd89da-69f3-4721-a249-8bd85f96cb53');
         formDataToSend.append('subject', 'New Feedback from Energy Postcodes');
         formDataToSend.append('from_name', formData.organization || 'Anonymous');
-        formDataToSend.append('email', formData.email || 'noreply@energy-postcodes.uk');
+        formDataToSend.append('email', formData.email);
         
         // Combine all feedback into the message field
         const message = `
