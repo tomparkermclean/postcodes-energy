@@ -482,15 +482,28 @@ async function handleFeedbackSubmit(e) {
     submitBtn.textContent = 'Sending...';
     
     try {
-        // Send to Web3Forms
+        // Send to Web3Forms with standard field names
         const formDataToSend = new FormData();
         formDataToSend.append('access_key', '51dd89da-69f3-4721-a249-8bd85f96cb53');
         formDataToSend.append('subject', 'New Feedback from Energy Postcodes');
-        formDataToSend.append('use_case', formData.useCase);
-        formDataToSend.append('organization', formData.organization);
-        formDataToSend.append('suggestions', formData.suggestions);
+        formDataToSend.append('from_name', formData.organization || 'Anonymous');
         formDataToSend.append('email', formData.email || 'noreply@energy-postcodes.uk');
-        formDataToSend.append('timestamp', formData.timestamp);
+        
+        // Combine all feedback into the message field
+        const message = `
+USE CASE:
+${formData.useCase}
+
+ORGANIZATION:
+${formData.organization || 'Not provided'}
+
+SUGGESTIONS:
+${formData.suggestions || 'Not provided'}
+
+TIMESTAMP: ${formData.timestamp}
+        `.trim();
+        
+        formDataToSend.append('message', message);
         
         const response = await fetch('https://api.web3forms.com/submit', {
             method: 'POST',
