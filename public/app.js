@@ -489,7 +489,7 @@ async function handleFeedbackSubmit(e) {
         formDataToSend.append('use_case', formData.useCase);
         formDataToSend.append('organization', formData.organization);
         formDataToSend.append('suggestions', formData.suggestions);
-        formDataToSend.append('email', formData.email || 'Not provided');
+        formDataToSend.append('email', formData.email || 'noreply@energy-postcodes.uk');
         formDataToSend.append('timestamp', formData.timestamp);
         
         const response = await fetch('https://api.web3forms.com/submit', {
