@@ -482,25 +482,25 @@ async function handleFeedbackSubmit(e) {
     submitBtn.textContent = 'Sending...';
     
     try {
-        // Send to Formspree using FormData
+        // Send to Web3Forms
         const formDataToSend = new FormData();
+        formDataToSend.append('access_key', '51dd89da-69f3-4721-a249-8bd85f96cb53');
+        formDataToSend.append('subject', 'New Feedback from Energy Postcodes');
         formDataToSend.append('use_case', formData.useCase);
         formDataToSend.append('organization', formData.organization);
         formDataToSend.append('suggestions', formData.suggestions);
-        // If email is empty, send a placeholder so Formshield doesn't block it
-        formDataToSend.append('email', formData.email || 'noreply@energy-postcodes.uk');
+        formDataToSend.append('email', formData.email || 'Not provided');
         formDataToSend.append('timestamp', formData.timestamp);
         
-        const response = await fetch('https://formspree.io/f/xykprrkn', {
+        const response = await fetch('https://api.web3forms.com/submit', {
             method: 'POST',
-            body: formDataToSend,
-            headers: {
-                'Accept': 'application/json'
-            }
+            body: formDataToSend
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to submit feedback');
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to submit feedback');
         }
         
         console.log('Feedback submitted successfully:', formData);
