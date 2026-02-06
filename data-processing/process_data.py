@@ -185,8 +185,14 @@ def load_postcode_data() -> gpd.GeoDataFrame:
     """
     print("\n=== Loading Postcode Data ===\n")
     
-    # Look for postcode file in raw/postcodes
-    postcode_files = list(RAW_POSTCODES.glob("*.csv"))
+    # Look for postcode file in raw/postcodes (prioritize ONSPD files)
+    postcode_files = list(RAW_POSTCODES.glob("ONSPD*.csv"))
+    
+    if not postcode_files:
+        # Fallback to any CSV if no ONSPD found
+        postcode_files = list(RAW_POSTCODES.glob("*.csv"))
+        # Exclude household census file
+        postcode_files = [f for f in postcode_files if 'Household' not in f.name]
     
     if not postcode_files:
         print("ERROR: No postcode CSV file found in raw/postcodes/")
@@ -201,12 +207,16 @@ def load_postcode_data() -> gpd.GeoDataFrame:
     # Code-Point: different format, may need adjustment
     
     try:
-        # Try ONSPD column names (PCDS, LAT, LONG)
-        df = pd.read_csv(postcode_file, usecols=['PCDS', 'LAT', 'LONG'])
-        df = df.dropna(subset=['LAT', 'LONG'])
+        # Try ONSPD column names - try both uppercase and lowercase
+        try:
+            df = pd.read_csv(postcode_file, usecols=['PCDS', 'LAT', 'LONG'])
+            df = df.rename(columns={'PCDS': 'pcd', 'LAT': 'lat', 'LONG': 'long'})
+        except:
+            # Try lowercase column names
+            df = pd.read_csv(postcode_file, usecols=['pcds', 'lat', 'long'])
+            df = df.rename(columns={'pcds': 'pcd'})
         
-        # Rename to standard names
-        df = df.rename(columns={'PCDS': 'pcd', 'LAT': 'lat', 'LONG': 'long'})
+        df = df.dropna(subset=['lat', 'long'])
         
         # Create GeoDataFrame from lat/long
         gdf = gpd.GeoDataFrame(
@@ -220,7 +230,7 @@ def load_postcode_data() -> gpd.GeoDataFrame:
         
     except Exception as e:
         print(f"ERROR loading postcodes: {e}")
-        print("Make sure your CSV has columns: 'PCDS', 'LAT', 'LONG' (ONSPD format)")
+        print("Make sure your CSV has columns: 'PCDS'/'pcds', 'LAT'/'lat', 'LONG'/'long' (ONSPD format)")
         return None
 
 
@@ -288,8 +298,35 @@ def create_postcode_lookup(matched: pd.DataFrame) -> Dict:
     return lookup
 
 
+def load_household_data() -> Dict[str, int]:
+    """
+    Load Census 2021 household count data by postcode.
+    Returns a dictionary mapping postcode to household count.
+    """
+    print("\n=== Loading Household Data ===\n")
+    
+    household_file = RAW_POSTCODES / "Household census data 2021.csv"
+    
+    if not household_file.exists():
+        print(f"WARNING: Household data file not found: {household_file}")
+        print("Proceeding without household counts...")
+        return {}
+    
+    try:
+        df = pd.read_csv(household_file)
+        # Normalize postcodes (remove spaces, uppercase)
+        df['Postcode'] = df['Postcode'].str.replace(' ', '').str.upper()
+        households = dict(zip(df['Postcode'], df['Count']))
+        print(f"[OK] Loaded household data for {len(households):,} postcodes")
+        return households
+    except Exception as e:
+        print(f"ERROR loading household data: {e}")
+        return {}
+
+
 def create_substation_details(substations: gpd.GeoDataFrame, 
-                              matched: pd.DataFrame) -> Dict:
+                               matched: pd.DataFrame,
+                               household_data: Dict[str, int]) -> Dict:
     """
     Create substation details with simplified boundaries, postcode counts, and postcode lists.
     """
@@ -307,11 +344,18 @@ def create_substation_details(substations: gpd.GeoDataFrame,
         substation_id = row['substation_id']
         postcodes = postcode_groups.get(substation_id, [])
         
+        # Calculate total households for this substation
+        total_households = 0
+        for pc in postcodes:
+            pc_normalized = pc.replace(' ', '').upper()
+            total_households += household_data.get(pc_normalized, 0)
+        
         details[substation_id] = {
             'name': row['substation_name'],
             'dno': row['dno_name'],
             'license_area': row['license_area'],
             'postcode_count': len(postcodes),
+            'household_count': total_households,
             'postcodes': sorted(postcodes),  # Include sorted list of all postcodes
             'boundary': json.loads(gpd.GeoSeries([row['geometry']]).to_json())['features'][0]['geometry']
         }
@@ -376,9 +420,12 @@ def main():
     # Match postcodes to substations
     matched = match_postcodes_to_substations(postcodes, substations)
     
+    # Load household census data
+    household_data = load_household_data()
+    
     # Create output files
     postcode_lookup = create_postcode_lookup(matched)
-    substation_details = create_substation_details(substations, matched)
+    substation_details = create_substation_details(substations, matched, household_data)
     
     # Save to disk
     save_outputs(postcode_lookup, substation_details)

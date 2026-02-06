@@ -231,6 +231,7 @@ async function displayResults(postcode, postcodeData) {
     document.getElementById('sub-dno').textContent = substation.dno;
     document.getElementById('sub-area').textContent = substation.license_area;
     document.getElementById('sub-count').textContent = substation.postcode_count.toLocaleString();
+    document.getElementById('sub-households').textContent = substation.household_count ? substation.household_count.toLocaleString() : 'Data unavailable';
     
     // Load nearby chunks to get more complete postcode list
     await loadNearbyChunks(postcode);

@@ -146,6 +146,8 @@ header h1 {
     border: 1.5px solid #e0e0e0;
     border-radius: 6px;
     font-family: 'Inter', inherit;
+    background-color: white;
+    color: #333;
     font-size: 0.875rem;
     font-weight: 400;
     transition: all 0.2s ease;
@@ -166,6 +168,15 @@ header h1 {
     font-size: 0.875rem;
     font-weight: 400;
     opacity: 1;
+}
+
+/* Override browser autofill styles */
+.form-group textarea:-webkit-autofill,
+.form-group textarea:-webkit-autofill:hover,
+.form-group textarea:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #333 !important;
+    background-color: white !important;
 }
 
 .form-group textarea {
@@ -254,11 +265,22 @@ header h1 {
     outline: none;
     transition: all 0.2s ease;
     font-weight: 400;
+    background-color: white;
+    color: #333;
 }
 
 #postcode-input:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Override browser autofill for postcode input */
+#postcode-input:-webkit-autofill,
+#postcode-input:-webkit-autofill:hover,
+#postcode-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #333 !important;
+    background-color: white !important;
 }
 
 #search-btn {

@@ -44,7 +44,7 @@ def simplify_substations_file(input_path, output_path):
     
     for substation_id, substation in data.items():
         # Keep essential fields for frontend
-        fields_to_keep = {'id', 'name', 'dno_id', 'dno_name', 'dno', 'license_area', 'postcode_count', 'centroid', 'boundary', 'geometry'}
+        fields_to_keep = {'id', 'name', 'dno_id', 'dno_name', 'dno', 'license_area', 'postcode_count', 'household_count', 'centroid', 'boundary', 'geometry'}
         fields_to_remove = [k for k in list(substation.keys()) if k not in fields_to_keep]
         for field in fields_to_remove:
             del substation[field]
