@@ -344,6 +344,13 @@ def create_substation_details(substations: gpd.GeoDataFrame,
         substation_id = row['substation_id']
         postcodes = postcode_groups.get(substation_id, [])
         
+        # Extract unique outward codes (chunk names) for this substation
+        outward_codes = set()
+        for pc in postcodes:
+            outward_match = pd.Series([pc]).str.extract(r'^([A-Z]{1,2}\d{1,2}[A-Z]?)', expand=False)
+            if not outward_match.isna().all():
+                outward_codes.add(outward_match[0])
+        
         # Calculate total households for this substation
         total_households = 0
         for pc in postcodes:
@@ -356,6 +363,7 @@ def create_substation_details(substations: gpd.GeoDataFrame,
             'license_area': row['license_area'],
             'postcode_count': len(postcodes),
             'household_count': total_households,
+            'chunks': sorted(list(outward_codes)),  # List of chunk files to load
             'postcodes': sorted(postcodes),  # Include sorted list of all postcodes
             'boundary': json.loads(gpd.GeoSeries([row['geometry']]).to_json())['features'][0]['geometry']
         }

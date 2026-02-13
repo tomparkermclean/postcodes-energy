@@ -233,8 +233,8 @@ async function displayResults(postcode, postcodeData) {
     document.getElementById('sub-count').textContent = substation.postcode_count.toLocaleString();
     document.getElementById('sub-households').textContent = substation.household_count ? substation.household_count.toLocaleString() : 'Data unavailable';
     
-    // Load nearby chunks to get more complete postcode list
-    await loadNearbyChunks(postcode);
+    // Load all chunks for this substation to get complete postcode list
+    await loadSubstationChunks(substation);
     
     // Get all postcodes in this substation area
     allPostcodesInArea = getAllPostcodesInSubstation(substationId);
@@ -250,29 +250,27 @@ async function displayResults(postcode, postcodeData) {
     resultsContainer.classList.remove('hidden');
 }
 
-// Load nearby chunks to get more complete postcode data
-async function loadNearbyChunks(postcode) {
-    // Extract area prefix (e.g., "IV" from "IV1 2DA")
-    const areaPrefix = postcode.match(/^[A-Z]+/)[0];
-    
-    // Load chunks for this area (e.g., IV1-IV99)
-    console.log(`Loading nearby chunks for area: ${areaPrefix}`);
-    const loadPromises = [];
-    
-    for (let i = 1; i <= 99; i++) {
-        const chunkName = `${areaPrefix}${i}`;
-        // Try to load, but don't fail if chunk doesn't exist
-        loadPromises.push(
-            loadChunk(chunkName).catch(() => null)
-        );
+// Load all chunks for a substation to get complete postcode list
+async function loadSubstationChunks(substation) {
+    // Check if substation has chunks list
+    if (!substation.chunks || !Array.isArray(substation.chunks)) {
+        console.warn('No chunks list for substation');
+        // Fallback - do nothing, will only find postcodes in already-loaded chunks
+        return;
     }
     
-    // Also try without number (e.g., "IV")
-    loadPromises.push(loadChunk(areaPrefix).catch(() => null));
+    console.log(`Loading ${substation.chunks.length} chunks for substation: ${substation.name}`);
     
-    // Wait for all to complete (successful or failed)
+    const loadPromises = substation.chunks.map(chunkName => 
+        loadChunk(chunkName).catch(() => {
+            console.warn(`Failed to load chunk: ${chunkName}`);
+            return null;
+        })
+    );
+    
+    // Wait for all chunks to load
     await Promise.all(loadPromises);
-    console.log(`Finished loading chunks for ${areaPrefix} area`);
+    console.log(`Finished loading all chunks`);
 }
 
 // Get all postcodes for a substation
